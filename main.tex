@@ -29,6 +29,19 @@ Give examlpe where it's needed.
 
 \section{Elastic Circuits}
 
+% Cortadella's paper
+In [?], Cortadella et al define \textit{Elastic Circuits}, a new scheme for latency-insensitive designs.
+Its primary motivation is to create a solution for circuits that might deal with variable delays, for modularity or scalability purposes for instance.
+Indeed, if the delay between two connected functional units is not known, then we need to enforce synchronous behaviour: the receiver should wait until the data produced by the sender has been computed, and the sender should wait until the receiver is ready to accept it.
+These new circuits implement the SELF protocol, where each unit is equipped with a \textit{Valid} and a \textit{Stop} Signal. When the sender's valid signal is true (meaning that its stored data is valid), and the receiver's stop signal is false (meaning that it can accept new data), then a data transfer occurs. Otherwise, the transfer is delayed. These signals are computed dynamically, and the protocol adds only a small overhead. The result is a circuit that enforces synchronicity, can be obtained automatically and proved to be correct by construction.
+
+FIGURE?
+
+Inspired by this definition, and [?], which brought elastic circuits to CGRAs, the authors suggest that using elastic circuits woul allow for a dynamic schedule in High-Level Synhesis.
+
+
+
+
 Definition,
 Synthesis,
 Registers,
