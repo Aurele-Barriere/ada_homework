@@ -1,31 +1,43 @@
 \documentclass{article}
+\usepackage{xcolor}
 
-\title{Dynamically Scheduled High-Level Synthesis: a Syntheesis}
+\title{Dynamically Scheduled High-Level Synthesis: a Synthesis}
 \author{Lana Josipovi\'c, Radhika Ghosal and Paolo Ienne\\ Synthesis by Aur\`ele Barri\`ere}
 \date{November 4th, 2018}
+
+\def\todo#1{{\color{red}#1}}
 
 \begin{document}
 \maketitle
 
 \section{Introduction}
+As more and more companies and datacenters start using FPGAs, the programming paradigms should adapt to a broader range of applications.
+The main goal of generating circuits for FPGAs is performance, and using parallelism as much as possible is a key to a shorter execution time.
 
-Context: FPGAs are used widely. Performance is key.
-Broader applications (datacenters).
+High-level Synthesis (HLS) tools generate circuits for FPGAs, from languages such as C.
+As of today, most HLS tools have a static approach to operation scheduling: the exact cycle where each operation will be executed is decided at synthesis time.
+Despite rigorous research on these techniques, static scheduling is fundamentally unable to exploit parallelism in some cases.
+For instance, when pipelining a loop, each iteration must follow the same schedule, even if the control-flow differs. To this end, static HLS must always assume the worst-case scenario: every branch might be taken and any two memory accesses might be dependent.
 
-Most used hing is HLS to generate circuits. Most of them static schedules.
-Everything is fixed at synthesis-time.
+Such information (independence of memory access or whether or not a branch is executed) could be retrieved dynamically, at run-time. Using this information could allow more parallelism.
+As a result, this paper presents a new strategy for HLS tools: generating dynamically svheduled circuits.
+This would mean that the exact schedule is unknown at synthesis-time, allowing different iterations of a loop to be scheduled differently depending on run-time information.
+Of course, extracting such information and delaying scheduling implies an overhead in time and an a bigger circuit complexity, but the overall performance should increase whenever static scheduling could not exploit some instruction parallelism.
 
-HLS is static. Static means we can't fully exploit parallelism.
-Some dynamic information should help.
+The end result is a complete methodology to generate dynamically scheduled circuits from C code. The transformation is automatic and has been implemented, tested and compared with traditional static HLS tools and other dynamic scheduling techniques.
 
-Parallel with VLIW and superscalar. Solution derives from VLIW tecniques? [28,37].
-VLIW, and HLS is really successful for regular programs.
 
-Result is new tradeoff between performance and circuit complexity.
-We also want minimal programmer effort.
+\todo{Parallel with VLIW and superscalar. Solution derives from VLIW tecniques? [28,37].
+VLIW, and HLS is really successful for regular programs.}
 
 \section{Dynamic Scheduling}
-Give examlpe where it's needed.
+\todo{Give example where it's needed.}
+Example where we can't decide statically whether some long computation will be done.
+Static scheduling with loop pipelining has to have the same schedule for each loop.
+No pipelining: we lose parralelism.
+Solution: dynamic scheduling. We need to delay the choices. Adds an overhead.
+
+Other example: use of address. We must assume worst-case.
 
 \section{Elastic Circuits}
 
@@ -39,15 +51,23 @@ FIGURE?
 
 Inspired by this definition, and [?], which brought elastic circuits to CGRAs, the authors suggest that using elastic circuits woul allow for a dynamic schedule in High-Level Synhesis.
 
+\todo{List of components}
+Such components include classical structure simply augmented with the appropriate handshake signals. For instance elastic buffers, elastic FIFOs, elastic Select (multiplexer).
 
 
 
-Definition,
-Synthesis,
-Registers,
-Memory, ...
+\section{Synthesizing Elastic Circuits}
+
+First step: basic blocks to datapath.\\
+Implement control flow. Tokens.\\
+Registers\\
+Memory\\
+FIFO
 
 \section{Evaluation}
+benchmark\\
+Comparison with static HLS\\
+<compzrison with other Dynamic Techniques
 
 \section{Conclusion}
 
