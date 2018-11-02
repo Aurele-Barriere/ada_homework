@@ -65,9 +65,27 @@ Memory\\
 FIFO
 
 \section{Evaluation}
-benchmark\\
-Comparison with static HLS\\
-<compzrison with other Dynamic Techniques
+The authors implemented a basic synthesizer following the described techniques.
+It uses clang for parsing and SSA generation, one of LLVM's intermediate representations and the LLVM standard optimizations.
+The methodology itself is implemented as a transformation from LLVM's IR to an elastic circuit, itself transformed into a VHDL netlist. The end result can be run on a FPGA.
+
+\subsection{Benchmark}
+Most programs used in this benchmark are known to present parallelism issues when using static scheduling. This shows the best results one could expect when switching to dynamic scheduling.
+The first program \textit{Histogram} goes through an array and increases histogram bars upon finding corresponding values. Statically, we can't determine whether accessing the bars may contain memory dependencies, so we need to assume the worst each time.
+The benchmark also includes a \textit{Matrix Power} program, and two loops. The second loop changes the way an operation is performed to show how resource usage in Dynamic HLS can be reduced.
+Finally, the benchmark include a \textit{FIR filter}, that is knwon to perform well under static synthesis. This programs allows to estimate the overhead introduced by dynamic scheduling, as no more parallelism can be achieved (every read and write is known to be independent at synthesis-time).
+
+\subsection{Results}
+These programs are first compared to Static HLS tools, such as Vivado HLS with pipelin optimization. Comparison fairness is enforced by using the exact same arithmetic units (extracted manually), the same RAMs.
+Comparison is done through modelization (with ModelSim).
+As no effort has been made yet to optimize the alstic circuits themselves, while static scheduling has benefited from years of study, one could expect to obtain even better results.
+
+Results can be seen on Table ?. One can see significant improvements in execution time for most programs, despite an increase on clock period due to elastic handshake signals.
+The results show that the dynamic overhead is negligible compared to the time spared with more parallelism. As expected, the only program where static scheduling performs better is the \textit{FIR filter}, but the difference is minor.
+Of course, this execution time improvement requires an added circuit complexity. As a result, elastic circuits are less resource-friendly than static ones. The authors yet argue that the overhead of adding FIFOs would be much less prevalent in bigger programs. Some optimizations could still be done. For instance the second loop is designed to use much less units than the first one.
+
+The new methodology is then compared to other dynamic scheduling techniques.
+\todo{describe results}
 
 \section{Conclusion}
 
