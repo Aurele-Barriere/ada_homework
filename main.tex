@@ -152,9 +152,7 @@ Better instruction parallelism is achieved. The idea to obtain this schedule is 
 In [?], Cortadella et al define \textit{Elastic Circuits}, a new scheme for latency-insensitive designs.
 Its primary motivation is to create a solution for circuits that might deal with variable delays, for modularity or scalability purposes for instance.
 Indeed, if the delay between two connected functional units is not known, then we need to enforce synchronous behaviour: the receiver should wait until the data produced by the sender has been computed, and the sender should wait until the receiver is ready to accept it.
-These new circuits implement the SELF protocol, where each unit is equipped with a \textit{Valid} and a \textit{Stop} Signal. When the sender's valid signal is true (meaning that its stored data is valid), and the receiver's stop signal is false (meaning that it can accept new data), then a data transfer occurs. Otherwise, the transfer is delayed. These signals are computed dynamically, and the protocol adds only a small overhead. The result is a circuit that enforces synchronicity, can be obtained automatically and proved to be correct by construction.
-
-\todo{FIGURE}
+These new circuits implement the SELF protocol, where each unit is equipped with a \textit{Valid} and a \textit{Stop} Signal. When the sender's valid signal is true (meaning that its stored data is valid), and the receiver's stop signal is false (meaning that it can accept new data), then a data transfer occurs. Otherwise, the transfer is delayed. These signals are computed dynamically, and the protocol adds only a small overhead. The result is a circuit that enforces synchronicity, can be obtained automatically and proved to be correct by construction. Elastic ciruits are latency-insisitive, synchronous and adapted for FPGAs.
 
 Inspired by this definition, and [?], which brought elastic circuits to CGRAs, the authors suggest that using elastic circuits woul allow for a dynamic schedule in High-Level Synhesis.
 Such components include classical structure simply augmented with the appropriate handshake signals. For instance elastic buffers, elastic FIFOs, elastic Select (multiplexer). As the handshake signals act as tokens in Petri nets, one also needs more components, such as elastic forks that duplicate tokens or elastic joins. Finally, the remaining elastic blocks deal with control flow: elastic branches and elastic merges.
@@ -166,12 +164,17 @@ As an example, we present in Figure ? a simplified elastic circuit for the progr
 
 
 \section{Synthesizing Elastic Circuits}
+Having chosen elastic circuits, the authors now provide an automatic algortihm to generate them from C code.
+They first describe how to transform any \textit{basic block} (part of the code without branching) into an elastic circuits. This transformation is straightforward and resemble many other HLS techniques: any operator is a functional units, and we use elastic forks whenever the result of a node is used several times.
+Basic Blocks are themselves connected with elastic merges and elastic branches (one for each variable).
+At each block is associated a set \textit{live-in} of variables entering the block, and \textit{live-out} for those used by its successors.
+Implementing control flow in elastic circuits require some work to ensure token transfer; one needs to generate (with forks for instance) exactly as many tokens as consumed by successor blocks. To this end, the data propagation information is added to the control-flow graph. The \textit{live-in} and \textit{live-out} sets are modified to ensure that there is no deadlock provided that each cycle has at least one elastic buffer.
 
-First step: basic blocks to datapath.\\
-Implement control flow. Tokens.\\
-Registers\\
-Memory\\
-FIFO
+As in traditional synchronous circuits, adding elastic buffers can sometimes reduce the critical path's length, without having any effect on the syntheis' correctness. A simple heuristic has been implemented to decide where to add elastic buffers. In the experiments, the heuristic found optimal placements, but this could be an idea for further improvements.
+
+Handling memory accesses is more challenging, as access requests might arrive to memory in any order (the dynamic schedule may be out-of-order).
+To make sure that no dependency is \todo{keep going}
+
 
 \section{Evaluation}
 The authors implemented a basic synthesizer following the described techniques.
