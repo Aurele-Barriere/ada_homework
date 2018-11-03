@@ -1,5 +1,8 @@
 \documentclass{article}
 \usepackage{xcolor}
+\usepackage{listings}
+\usepackage{pgfgantt}
+\definecolor{blue}{HTML}{74BBC9}
 
 \title{Dynamically Scheduled High-Level Synthesis: a Synthesis}
 \author{Lana Josipovi\'c, Radhika Ghosal and Paolo Ienne\\ Synthesis by Aur\`ele Barri\`ere}
@@ -20,7 +23,7 @@ Despite rigorous research on these techniques, static scheduling is fundamentall
 For instance, when pipelining a loop, each iteration must follow the same schedule, even if the control-flow differs. To this end, static HLS must always assume the worst-case scenario: every branch might be taken and any two memory accesses might be dependent.
 
 Such information (independence of memory access or whether or not a branch is executed) could be retrieved dynamically, at run-time. Using this information could allow more parallelism.
-As a result, this paper presents a new strategy for HLS tools: generating dynamically svheduled circuits.
+As a result, this paper presents a new strategy for HLS tools: generating dynamically scheduled circuits.
 This would mean that the exact schedule is unknown at synthesis-time, allowing different iterations of a loop to be scheduled differently depending on run-time information.
 Of course, extracting such information and delaying scheduling implies an overhead in time and an a bigger circuit complexity, but the overall performance should increase whenever static scheduling could not exploit some instruction parallelism.
 
@@ -31,13 +34,117 @@ The end result is a complete methodology to generate dynamically scheduled circu
 VLIW, and HLS is really successful for regular programs.}
 
 \section{Dynamic Scheduling}
-\todo{Give example where it's needed.}
-Example where we can't decide statically whether some long computation will be done.
-Static scheduling with loop pipelining has to have the same schedule for each loop.
-No pipelining: we lose parralelism.
-Solution: dynamic scheduling. We need to delay the choices. Adds an overhead.
+Static scheduling of a loop has to be correct for every possible iteration.
+Consider for instance this minimal example:
+\begin{lstlisting}
+  for(int i=0; i<100: i++) {
+    d = A[i] * 2;
+    if (d >= 0) { s += d; }
+  } 
+\end{lstlisting}
+Where \texttt{A} is an array which begins with \texttt{[-1, 2, 3, -2]}.
+A static schedule must assume that the \texttt{if} will be taken, and thus each iteration must perform a read, a muliplication, a test, and the addition \texttt{s += d}. Iterations are not independent, as one must wait the end of the addition of the previous iteration before executing the next one.
+With pipelining, the best static scheduling one can hope is the following:
 
-Other example: use of address. We must assume worst-case.
+
+\begin{figure}[h]
+\hspace{-3cm}
+%\centering
+\begin{ganttchart}[
+		x unit=0.7cm,
+		y unit chart=0.7cm,
+		canvas/.style={draw=none,fill=none}, % remove canvas borders, etc
+		vgrid={*1{draw=black!12}},           % vertical gray lines every unit
+		inline,                              % draw bars inline
+		group/.style={draw=none,fill=none},  % remove group borders, etc
+		bar top shift=0.1,                   % give bar 10% padding top/bottom
+		bar height=0.8,                      % bar size 80% of vertical space
+		y unit title=0.5cm,                  % crop titles a little smaller
+		title/.style={draw=none,fill=none},  % remove title borders, etc
+		include title in canvas=false        % no vertical grid in title
+	]{-1}{21}
+
+	\ganttgroup[inline=false]{$i=1$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{0}{0}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{1}{4} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{5}{5}
+        \ganttbar[bar/.style={fill=red}]{\texttt{+}}{6}{9}\\
+        
+	\ganttgroup[inline=false]{$i=2$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{4}{4}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{5}{8} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{9}{9}
+        \ganttbar[bar/.style={fill=blue}]{\texttt{+}}{10}{13}\\
+
+        \ganttgroup[inline=false]{$i=3$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{8}{8}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{9}{12} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{13}{13}
+        \ganttbar[bar/.style={fill=blue}]{\texttt{+}}{14}{17}\\
+
+        \ganttgroup[inline=false]{$i=4$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{12}{12}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{13}{16} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{17}{17}
+        \ganttbar[bar/.style={fill=red}]{\texttt{+}}{18}{21}
+
+
+\end{ganttchart}
+\caption{Static scheduling with loop pipelining. Red operations are not actually used}
+\label{fig:static_schedule}
+\end{figure}
+
+We can notice that, even if some of the additions are not used (whenever \texttt{A[i]} is negative), they are still scheduled. This delays the whole schedule, as the second iteration could start only one cycle after the first one if we knew that the first \texttt{if} wasn't taken.
+
+The idea of dynamic scheduling is to achieve the following one:
+\begin{figure}[h]
+\hspace{-3cm}
+%\centering
+\begin{ganttchart}[
+		x unit=0.7cm,
+		y unit chart=0.7cm,
+		canvas/.style={draw=none,fill=none}, % remove canvas borders, etc
+		vgrid={*1{draw=black!12}},           % vertical gray lines every unit
+		inline,                              % draw bars inline
+		group/.style={draw=none,fill=none},  % remove group borders, etc
+		bar top shift=0.1,                   % give bar 10% padding top/bottom
+		bar height=0.8,                      % bar size 80% of vertical space
+		y unit title=0.5cm,                  % crop titles a little smaller
+		title/.style={draw=none,fill=none},  % remove title borders, etc
+		include title in canvas=false        % no vertical grid in title
+	]{-1}{21}
+
+	\ganttgroup[inline=false]{$i=1$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{0}{0}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{1}{4} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{5}{5}\\
+        %\ganttbar[bar/.style={fill=red}]{\texttt{+}}{6}{9}\\
+        
+	\ganttgroup[inline=false]{$i=2$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{1}{1}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{2}{5} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{6}{6}
+        \ganttbar[bar/.style={fill=blue}]{\texttt{+}}{7}{10}\\
+
+        \ganttgroup[inline=false]{$i=3$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{2}{2}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{3}{6} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{7}{7}
+        \ganttbar[bar/.style={fill=blue}]{\texttt{+}}{11}{14}\\
+
+        \ganttgroup[inline=false]{$i=4$}{0}{1}
+	\ganttbar[bar/.style={fill=yellow}]{\texttt{Read}}{3}{3}
+	\ganttbar[bar/.style={fill=blue}]{\texttt{*}}{4}{7} 
+        \ganttbar[bar/.style={fill=yellow}]{\texttt{>=}}{8}{8}
+        %\ganttbar[bar/.style={fill=red}]{\texttt{+}}{18}{21}
+
+
+\end{ganttchart}
+\caption{Dynamic Scheduling}
+\label{fig:dynamic_schedule}
+\end{figure}
+
+Better instruction parallelism is achieved. The idea to obtain this schedule is to build a circuit that will execute operations as soon as possible (as soon as its inputs are ready). This way, unused operations won't be scheduled (we don't see any red blocks in figure ?). The authors suggest using Elastic Circuits.
 
 \section{Elastic Circuits}
 
@@ -47,13 +154,15 @@ Its primary motivation is to create a solution for circuits that might deal with
 Indeed, if the delay between two connected functional units is not known, then we need to enforce synchronous behaviour: the receiver should wait until the data produced by the sender has been computed, and the sender should wait until the receiver is ready to accept it.
 These new circuits implement the SELF protocol, where each unit is equipped with a \textit{Valid} and a \textit{Stop} Signal. When the sender's valid signal is true (meaning that its stored data is valid), and the receiver's stop signal is false (meaning that it can accept new data), then a data transfer occurs. Otherwise, the transfer is delayed. These signals are computed dynamically, and the protocol adds only a small overhead. The result is a circuit that enforces synchronicity, can be obtained automatically and proved to be correct by construction.
 
-FIGURE?
+\todo{FIGURE}
 
 Inspired by this definition, and [?], which brought elastic circuits to CGRAs, the authors suggest that using elastic circuits woul allow for a dynamic schedule in High-Level Synhesis.
-
-\todo{List of components}
-Such components include classical structure simply augmented with the appropriate handshake signals. For instance elastic buffers, elastic FIFOs, elastic Select (multiplexer).
-
+Such components include classical structure simply augmented with the appropriate handshake signals. For instance elastic buffers, elastic FIFOs, elastic Select (multiplexer). As the handshake signals act as tokens in Petri nets, one also needs more components, such as elastic forks that duplicate tokens or elastic joins. Finally, the remaining elastic blocks deal with control flow: elastic branches and elastic merges.
+As an example, we present in Figure ? a simplified elastic circuit for the program of section ?.
+\begin{figure}
+  \center
+  \includegraphics[scale=0.3]{circuit.png}
+\end{figure}
 
 
 \section{Synthesizing Elastic Circuits}
