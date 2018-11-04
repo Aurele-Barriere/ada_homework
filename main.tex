@@ -164,7 +164,7 @@ As an example, we present in Figure~\ref{fig:elastic} a simplified elastic circu
 
 \section{Synthesizing Elastic Circuits}
 Having chosen elastic circuits, the authors now provide an automatic algorithm to generate them from C code.
-They first describe how to transform any \textit{basic block} (part of the code without branching) into an elastic circuits. This transformation is straightforward and resemble many other HLS techniques: any operator is a functional units, and we use elastic forks whenever the result of a node is used several times.
+They first describe how to transform any \textit{basic block} (part of the code without branching) into an elastic circuit. This transformation is straightforward and resemble many other HLS techniques: any operator is a functional unit, and we use elastic forks whenever the result of a node is used several times.
 Basic Blocks are themselves connected with elastic merges and elastic branches (one for each variable).
 At each block is associated a set \textit{live-in} of variables entering the block, and \textit{live-out} for those used by its successors.
 Implementing control flow in elastic circuits require some work to ensure token transfer; one needs to generate (with forks for instance) exactly as many tokens as consumed by successor blocks. To this end, the data propagation information is added to the control-flow graph. The \textit{live-in} and \textit{live-out} sets are modified to ensure that there is no deadlock provided that each cycle has at least one elastic buffer.
@@ -172,9 +172,9 @@ Implementing control flow in elastic circuits require some work to ensure token 
 As in traditional synchronous circuits, adding elastic buffers can sometimes reduce the critical path's length, without having any effect on the synthesis' correctness. A simple heuristic has been implemented to decide where to add elastic buffers. In the experiments, the heuristic found optimal placements, but this could be an idea for further improvements.
 
 Handling memory accesses is more challenging, as access requests might arrive to memory in any order (the dynamic schedule may be out-of-order).
-To make enforce the circuit's correctness, the authors use a \textit{load-store-queue} (LSQ). This idea comes from dynamically scheduled processors. The LSQ is given the original order of memory accesses, which guarantees that the circuits have the semantics intended. More details can be found in~\cite{DBLP:journals/tecs/JosipovicBI17}. The correct construction differs from the general translation and uses \textit{lazy forks} that wait for both outputs to be ready in order (as one must wait for the LSQ to accept a token before transferring with the next basic block). When connecting to the memory, elastic buffers might compromise the order of memory accesses and are thus prevented.
+To enforce the circuit's correctness, the authors use a \textit{load-store-queue} (LSQ). This idea comes from dynamically scheduled processors. The LSQ is given the original order of memory accesses, which guarantees that the circuits have the semantics intended. More details can be found in~\cite{DBLP:journals/tecs/JosipovicBI17}. The correct construction differs from the general translation and uses \textit{lazy forks} that wait for both outputs to be ready in order (as one must wait for the LSQ to accept a token before transferring with the next basic block). When connecting to the memory, elastic buffers might compromise the order of memory accesses and are thus prevented.
 
-Finally, the authors notice that, as some paths take more time than others and risk delaying other paths, we can have a better performance by inserting Elastic FIFOs on such paths. Indeed, this allows tokens to accumulate for a while and keep transferring tokens. In cases where the longer path isn't always taken, the accumulated tokens will be treated later and the overall schedule presents more parallelism. This show a compromise between circuit complexity and performance.
+Finally, the authors notice that, as some paths take more time than others and risk delaying other paths, we can have a better performance by inserting Elastic FIFOs on such paths. Indeed, this allows tokens to accumulate for a while and keep transferring tokens. In cases where the longer path isn't always taken, the accumulated tokens will be treated later and the overall schedule presents more parallelism. This shows a compromise between circuit complexity and performance.
 
 
 \section{Evaluation}
@@ -189,7 +189,7 @@ The benchmark also includes a \textit{Matrix Power} program, and two loops. The 
 Finally, the benchmark include a \textit{FIR filter}, that is known to perform well under static synthesis. This programs allows to estimate the overhead introduced by dynamic scheduling, as no more parallelism can be achieved (every read and write is known to be independent at synthesis-time).
 
 \subsection{Results}
-These programs are first compared to Static HLS tools, such as Vivado HLS with pipeline optimization. Comparison fairness is enforced by using the exact same arithmetic units (extracted manually), the same RAMs.
+These programs are first compared to Static HLS tools, such as Vivado HLS with pipeline optimization. Comparison fairness is enforced by using the exact same arithmetic units (extracted manually) and the same RAMs.
 Comparison is done through modelization (with ModelSim).
 As no effort has been made yet to optimize the elastic circuits themselves, while static scheduling has benefited from years of study, one could expect to obtain even better results.
 
@@ -209,7 +209,7 @@ As no effort has been made yet to optimize the elastic circuits themselves, whil
 
 Results can be seen on Table~\ref{table:results_stat}. One can see significant improvements in execution time for most programs, despite an increase on clock period due to elastic handshake signals.
 The results show that the dynamic overhead is negligible compared to the time spared with more parallelism. As expected, the only program where static scheduling performs better is the \textit{FIR filter}, but the difference is minor.
-Of course, this execution time improvement requires an added circuit complexity. As a result, elastic circuits are less resource-friendly than static ones. The authors yet argue that the overhead of adding FIFOs would be much less prevalent in bigger programs. Some optimizations could still be done. For instance the second loop is designed to use much less units than the first one.
+Of course, this execution time improvement requires an added circuit complexity. As a result, elastic circuits are less resource-friendly than static ones. The authors yet argue that the overhead of adding FIFOs would be much less prevalent in bigger programs. Some optimizations could still be done. For instance the second loop is designed to use less units than the first one.
 
 \begin{table}
   \hspace{-3cm}
@@ -230,22 +230,28 @@ The result of this comparison can be seen on Table~\ref{table:results_dyn}. Once
 \section{Conclusion}
 With FPGAs being more and more used, performance of circuit synthesis is an important problem.
 This papers show that static scheduling techniques are confronted to limits that are intrinsic to their static natures.
-The HLS approach to scheduling is often compared to the VLIW approach for general-purpose processors. Both perform greatly for regular applications.
+The HLS approach to scheduling is often compared to the VLIW approach for general-purpose processors. Both perform greatly only for regular applications (with a regular control-flow).
 Using previous work on latency-insensitive circuits, they design a new methodology to automatically generate circuits from C code.
+Other related works used to do static scheduling with some dynamic behavior, but this approach is completely dynamic.
 They solve arising problems (memory accesses, control-flow starvation) and suggest ways to improve and optimize circuit generation.
 The new circuits are often able to exploit parallelism where static synthesis could not.
-The method is already implemented, although without much optimization, which show its practicality.
-The results on the benchmark seem to indicate that performance can be increased significantly. And for other programs where static scheduling is adapted, the overhead isn't significant.
-However, this methodology implies a consequent increase in circuit complexity, that one can hope to reduce with optimizations. 
+The method is already implemented, although without much optimization, which shows its practicality.
+The results on the benchmark seem to indicate that performance can be increased significantly. And for other programs where static scheduling is adapted, the overhead isn't problematic.
+However, this methodology implies a consequent increase in circuit complexity, that one can hope to reduce with optimizations.
+
 
 \section{Overview}
 This paper was published in 2018 in the International Symposium on Field-Programmable Gate Arrays (FPGA18).
 As it is such a recent paper, it has only been cited a couple times, but the promising results might justify further work.
 It is following the work presented in~\cite{DBLP:conf/acssc/JosipovicBI17} (with 2 authors in common), which introduced the idea of using elastic circuits for dynamic HLS scheduling but only gave a big picture of the methodology.
 This work opens the field to using HLS for a broader range of applications, especially less regular ones which require more run-time flexibility to fully extract parallelism.
+Finally, dynamic scheduling is theoretically full of promises for speculative execution. It has been shown that elastic circuits can be modified to accommodate it, and speculations on control-flow or memory dependencies would greatly benefit performance.
 
-\section{References}
-\bibliographystyle{plain}
+The paper's explanations are clear and well-structured. The motivations and contributions are, rightfully so, thoroughly explained.
+Nonetheless, one could have expected a bigger benchmark, especially when comparing to other dynamic techniques.  The ``semimanual'' steps mentioned could have been detailed a bit more.
+But overall, the paper is convincing and draws attention to new circuit generation paradigms.
+
+\bibliographystyle{ieeetr}
 \bibliography{main}
 
 
