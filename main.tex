@@ -30,6 +30,7 @@ Of course, extracting such information and delaying scheduling implies an overhe
 The end result is a complete methodology to generate dynamically scheduled circuits from C code. The transformation is automatic and has been implemented, tested and compared with traditional static HLS tools and other dynamic scheduling techniques.
 
 \section{Dynamic Scheduling}
+\label{sec:dynamic}
 Static scheduling of a loop has to be correct for every possible iteration.
 Consider for instance this minimal example:
 \begin{lstlisting}
@@ -140,7 +141,7 @@ The idea of dynamic scheduling is to achieve the following one:
 \label{fig:dynamic_schedule}
 \end{figure}
 
-Better instruction parallelism is achieved. The idea to obtain this schedule is to build a circuit that will execute operations as soon as possible (as soon as its inputs are ready). This way, unused operations won't be scheduled (we don't see any red blocks in figure ?). The authors suggest using Elastic Circuits.
+Better instruction parallelism is achieved. The idea to obtain this schedule is to build a circuit that will execute operations as soon as possible (as soon as its inputs are ready). This way, unused operations won't be scheduled (we don't see any red blocks in Figure~\ref{fig:dynamic_schedule}). The authors suggest using Elastic Circuits.
 
 \section{Elastic Circuits}
 
@@ -152,10 +153,12 @@ These new circuits implement the SELF protocol, where each unit is equipped with
 
 Inspired by this definition, and~\cite{DBLP:conf/fpga/HuangITCW13}, which brought elastic circuits to CGRAs, the authors suggest that using elastic circuits woul allow for a dynamic schedule in High-Level Synhesis.
 Such components include classical structure simply augmented with the appropriate handshake signals. For instance elastic buffers, elastic FIFOs, elastic Select (multiplexer). As the handshake signals act as tokens in Petri nets, one also needs more components, such as elastic forks that duplicate tokens or elastic joins. Finally, the remaining elastic blocks deal with control flow: elastic branches and elastic merges.
-As an example, we present in Figure ? a simplified elastic circuit for the program of section ?.
+As an example, we present in Figure~\ref{fig:elastic} a simplified elastic circuit for the program of section~\ref{sec:dynamic}.
 \begin{figure}
   \center
   \includegraphics[scale=0.3]{circuit.png}
+  \caption{The elastic circuit for the example}
+  \label{fig:elastic}
 \end{figure}
 
 
@@ -186,18 +189,43 @@ The benchmark also includes a \textit{Matrix Power} program, and two loops. The 
 Finally, the benchmark include a \textit{FIR filter}, that is knwon to perform well under static synthesis. This programs allows to estimate the overhead introduced by dynamic scheduling, as no more parallelism can be achieved (every read and write is known to be independent at synthesis-time).
 
 \subsection{Results}
-These programs are first compared to Static HLS tools, such as Vivado HLS with pipelin optimization. Comparison fairness is enforced by using the exact same arithmetic units (extracted manually), the same RAMs.
+These programs are first compared to Static HLS tools, such as Vivado HLS with pipeline optimization. Comparison fairness is enforced by using the exact same arithmetic units (extracted manually), the same RAMs.
 Comparison is done through modelization (with ModelSim).
 As no effort has been made yet to optimize the alstic circuits themselves, while static scheduling has benefited from years of study, one could expect to obtain even better results.
 
-Results can be seen on Table ?. One can see significant improvements in execution time for most programs, despite an increase on clock period due to elastic handshake signals.
+\begin{table}
+  \hspace{-2cm}
+  \begin{tabular}{l c c c c}
+    \textbf{Benchmark} & \textbf{Execution Time STAT} & \textbf{Execution Time DYN} & \textbf{Slices SAT} & \textbf{Slices DYN}\\
+    \texttt{Histogram} & 36.3 us & 13.3 us & 130 & 1101\\
+    \texttt{Matrix power} & 20.7 us & 9.6 us & 219 & 1465\\
+    \texttt{Loop 1} & 25.3 us & 6.2 us & 161 & 289\\
+    \texttt{Loop 2} & 17.1 us & 5.7 us & 187 & 240\\
+    \texttt{FIR filter} & 3.3 us & 4.4 us & 62 & 127
+  \end{tabular}
+  \caption{Table of Results. Slices quantify the resource utlization. DYN is Vivado's results. STAT is elastic circuits' results.}
+  \label{table:results_stat}
+\end{table}
+
+Results can be seen on Table~\ref{table:results_stat}. One can see significant improvements in execution time for most programs, despite an increase on clock period due to elastic handshake signals.
 The results show that the dynamic overhead is negligible compared to the time spared with more parallelism. As expected, the only program where static scheduling performs better is the \textit{FIR filter}, but the difference is minor.
 Of course, this execution time improvement requires an added circuit complexity. As a result, elastic circuits are less resource-friendly than static ones. The authors yet argue that the overhead of adding FIFOs would be much less prevalent in bigger programs. Some optimizations could still be done. For instance the second loop is designed to use much less units than the first one.
+
+\begin{table}
+  \hspace{-3cm}
+  \begin{tabular}{l c c c c c c}
+    \textbf{Benchmark} & \textbf{Time HUANG} & \textbf{Time CASH} & \textbf{Time DYN} & \textbf{Slices HUANG} & \textbf{Slices CASH} & \textbf{Slices DYN}\\
+    \texttt{Histogram} & 58.9 us & 21.2 us & 13.3 us & 134 & 1083 & 1101\\
+    \texttt{Matrix power} & 26.2 us & 11.9 us & 8.6 us & 204 & 1445 & 1465
+  \end{tabular}
+  \caption{Table of Results. Slices quantify the resource utlization. HUANG is \cite{DBLP:conf/fpga/HuangITCW13}'s results. CASH is \cite{budiu-tr02}' results. DYN is this paper's results.}
+  \label{table:results_dyn}
+\end{table}
 
 The new methodology is then compared to other dynamic scheduling techniques.
 \cite{DBLP:conf/fpga/HuangITCW13} presents another generation of elastic circuits for a coarse-grain reconfigurable array. However, the circuits are synchronized at the end of each basic block, which prevents loop pipelining, as each iteration must end before the next one starts.
 \cite{DBLP:conf/ispass/BudiuAG05, budiu-tr02} describe how to generate asynchronous circuits from C code in a similar way. They have similar performance, but their conservative way of handling memory access makes them slower on the benchmark.
-The result of this comparison can be seen on Table ?. Once again, this new approach has a better performance but a bigger circuit complexity.
+The result of this comparison can be seen on Table~\ref{table:results_dyn}. Once again, this new approach has a better performance but a bigger circuit complexity.
 
 \section{Conclusion}
 With FPGAs being more and more used, performance of circuit synthesis is an important problem.
