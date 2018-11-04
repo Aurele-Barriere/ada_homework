@@ -14,7 +14,7 @@
 \maketitle
 
 \section{Introduction}
-As more and more companies and datacenters start using FPGAs, the programming paradigms should adapt to a broader range of applications.
+As more and more companies and data-centers start using FPGAs, the programming paradigms should adapt to a broader range of applications.
 The main goal of generating circuits for FPGAs is performance, and using parallelism as much as possible is a key to a shorter execution time.
 
 High-level Synthesis (HLS) tools generate circuits for FPGAs, from languages such as C.
@@ -40,7 +40,7 @@ Consider for instance this minimal example:
   } 
 \end{lstlisting}
 Where \texttt{A} is an array which begins with \texttt{[-1, 2, 3, -2]}.
-A static schedule must assume that the \texttt{if} will be taken, and thus each iteration must perform a read, a muliplication, a test, and the addition \texttt{s += d}. Iterations are not independent, as one must wait the end of the addition of the previous iteration before executing the next one.
+A static schedule must assume that the \texttt{if} will be taken, and thus each iteration must perform a read, a multiplication, a test, and the addition \texttt{s += d}. Iterations are not independent, as one must wait the end of the addition of the previous iteration before executing the next one.
 With pipelining, the best static scheduling one can hope is the following:
 
 
@@ -148,10 +148,10 @@ Better instruction parallelism is achieved. The idea to obtain this schedule is 
 % Cortadella's paper
 In~\cite{DBLP:conf/dac/CortadellaKG06}, Cortadella et al define \textit{Elastic Circuits}, a new scheme for latency-insensitive designs.
 Its primary motivation is to create a solution for circuits that might deal with variable delays, for modularity or scalability purposes for instance.
-Indeed, if the delay between two connected functional units is not known, then we need to enforce synchronous behaviour: the receiver should wait until the data produced by the sender has been computed, and the sender should wait until the receiver is ready to accept it.
-These new circuits implement the SELF protocol, where each unit is equipped with a \textit{Valid} and a \textit{Stop} Signal. When the sender's valid signal is true (meaning that its stored data is valid), and the receiver's stop signal is false (meaning that it can accept new data), then a data transfer occurs. Otherwise, the transfer is delayed. These signals are computed dynamically, and the protocol adds only a small overhead. The result is a circuit that enforces synchronicity, can be obtained automatically and proved to be correct by construction. Elastic ciruits are latency-insisitive, synchronous and adapted for FPGAs.
+Indeed, if the delay between two connected functional units is not known, then we need to enforce synchronous behavior: the receiver should wait until the data produced by the sender has been computed, and the sender should wait until the receiver is ready to accept it.
+These new circuits implement the SELF protocol, where each unit is equipped with a \textit{Valid} and a \textit{Stop} Signal. When the sender's valid signal is true (meaning that its stored data is valid), and the receiver's stop signal is false (meaning that it can accept new data), then a data transfer occurs. Otherwise, the transfer is delayed. These signals are computed dynamically, and the protocol adds only a small overhead. The result is a circuit that enforces synchronicity, can be obtained automatically and proved to be correct by construction. Elastic circuits are latency-insensitive, synchronous and adapted for FPGAs.
 
-Inspired by this definition, and~\cite{DBLP:conf/fpga/HuangITCW13}, which brought elastic circuits to CGRAs, the authors suggest that using elastic circuits woul allow for a dynamic schedule in High-Level Synhesis.
+Inspired by this definition, and~\cite{DBLP:conf/fpga/HuangITCW13}, which brought elastic circuits to CGRAs, the authors suggest that using elastic circuits would allow for a dynamic schedule in High-Level Synthesis.
 Such components include classical structure simply augmented with the appropriate handshake signals. For instance elastic buffers, elastic FIFOs, elastic Select (multiplexer). As the handshake signals act as tokens in Petri nets, one also needs more components, such as elastic forks that duplicate tokens or elastic joins. Finally, the remaining elastic blocks deal with control flow: elastic branches and elastic merges.
 As an example, we present in Figure~\ref{fig:elastic} a simplified elastic circuit for the program of section~\ref{sec:dynamic}.
 \begin{figure}
@@ -163,7 +163,7 @@ As an example, we present in Figure~\ref{fig:elastic} a simplified elastic circu
 
 
 \section{Synthesizing Elastic Circuits}
-Having chosen elastic circuits, the authors now provide an automatic algortihm to generate them from C code.
+Having chosen elastic circuits, the authors now provide an automatic algorithm to generate them from C code.
 They first describe how to transform any \textit{basic block} (part of the code without branching) into an elastic circuits. This transformation is straightforward and resemble many other HLS techniques: any operator is a functional units, and we use elastic forks whenever the result of a node is used several times.
 Basic Blocks are themselves connected with elastic merges and elastic branches (one for each variable).
 At each block is associated a set \textit{live-in} of variables entering the block, and \textit{live-out} for those used by its successors.
@@ -172,9 +172,9 @@ Implementing control flow in elastic circuits require some work to ensure token 
 As in traditional synchronous circuits, adding elastic buffers can sometimes reduce the critical path's length, without having any effect on the synthesis' correctness. A simple heuristic has been implemented to decide where to add elastic buffers. In the experiments, the heuristic found optimal placements, but this could be an idea for further improvements.
 
 Handling memory accesses is more challenging, as access requests might arrive to memory in any order (the dynamic schedule may be out-of-order).
-To make enforce the circuit's correctness, the authors use a \textit{load-store-queue} (LSQ). This idea comes from dynamically scheduled processors. The LSQ is given the original order of memory accesses, which guarantees that the circuits have the semantics intended. More details can be found in~\cite{DBLP:journals/tecs/JosipovicBI17}. The correct construction differs from the general translation and uses \textit{lazy forks} that wait for both outputs to be ready in order (as one must wait for the LSQ to accept a token before transfering with the next basic block). When connecting to the memory, elastic buffers might compromise the order of memory accesses and are thus prevented.
+To make enforce the circuit's correctness, the authors use a \textit{load-store-queue} (LSQ). This idea comes from dynamically scheduled processors. The LSQ is given the original order of memory accesses, which guarantees that the circuits have the semantics intended. More details can be found in~\cite{DBLP:journals/tecs/JosipovicBI17}. The correct construction differs from the general translation and uses \textit{lazy forks} that wait for both outputs to be ready in order (as one must wait for the LSQ to accept a token before transferring with the next basic block). When connecting to the memory, elastic buffers might compromise the order of memory accesses and are thus prevented.
 
-Finally, the authors notice that, as some paths take more time than others and risk delaying other paths, we can have a better performance by inserting Elastic FIFOs on such paths. Indeed, this allows tokens to accumulate for a while and keep transfering tokens. In cases where the longer path isn't always taken, the accumulated tokens will be treated later and the overall schedule presents more parallelism. This show a compromise between circuit complexity and performance.
+Finally, the authors notice that, as some paths take more time than others and risk delaying other paths, we can have a better performance by inserting Elastic FIFOs on such paths. Indeed, this allows tokens to accumulate for a while and keep transferring tokens. In cases where the longer path isn't always taken, the accumulated tokens will be treated later and the overall schedule presents more parallelism. This show a compromise between circuit complexity and performance.
 
 
 \section{Evaluation}
@@ -186,12 +186,12 @@ The methodology itself is implemented as a transformation from LLVM's IR to an e
 Most programs used in this benchmark are known to present parallelism issues when using static scheduling. This shows the best results one could expect when switching to dynamic scheduling.
 The first program \textit{Histogram} goes through an array and increases histogram bars upon finding corresponding values. Statically, we can't determine whether accessing the bars may contain memory dependencies, so we need to assume the worst each time.
 The benchmark also includes a \textit{Matrix Power} program, and two loops. The second loop changes the way an operation is performed to show how resource usage in Dynamic HLS can be reduced.
-Finally, the benchmark include a \textit{FIR filter}, that is knwon to perform well under static synthesis. This programs allows to estimate the overhead introduced by dynamic scheduling, as no more parallelism can be achieved (every read and write is known to be independent at synthesis-time).
+Finally, the benchmark include a \textit{FIR filter}, that is known to perform well under static synthesis. This programs allows to estimate the overhead introduced by dynamic scheduling, as no more parallelism can be achieved (every read and write is known to be independent at synthesis-time).
 
 \subsection{Results}
 These programs are first compared to Static HLS tools, such as Vivado HLS with pipeline optimization. Comparison fairness is enforced by using the exact same arithmetic units (extracted manually), the same RAMs.
 Comparison is done through modelization (with ModelSim).
-As no effort has been made yet to optimize the alstic circuits themselves, while static scheduling has benefited from years of study, one could expect to obtain even better results.
+As no effort has been made yet to optimize the elastic circuits themselves, while static scheduling has benefited from years of study, one could expect to obtain even better results.
 
 \begin{table}
   \hspace{-2cm}
@@ -203,7 +203,7 @@ As no effort has been made yet to optimize the alstic circuits themselves, while
     \texttt{Loop 2} & 17.1 us & 5.7 us & 187 & 240\\
     \texttt{FIR filter} & 3.3 us & 4.4 us & 62 & 127
   \end{tabular}
-  \caption{Table of Results. Slices quantify the resource utlization. DYN is Vivado's results. STAT is elastic circuits' results.}
+  \caption{Table of Results. Slices quantify the resource utilization. DYN is Vivado's results. STAT is elastic circuits' results.}
   \label{table:results_stat}
 \end{table}
 
@@ -218,7 +218,7 @@ Of course, this execution time improvement requires an added circuit complexity.
     \texttt{Histogram} & 58.9 us & 21.2 us & 13.3 us & 134 & 1083 & 1101\\
     \texttt{Matrix power} & 26.2 us & 11.9 us & 8.6 us & 204 & 1445 & 1465
   \end{tabular}
-  \caption{Table of Results. Slices quantify the resource utlization. HUANG is \cite{DBLP:conf/fpga/HuangITCW13}'s results. CASH is \cite{budiu-tr02}' results. DYN is this paper's results.}
+  \caption{Table of Results. Slices quantify the resource utilization. HUANG is \cite{DBLP:conf/fpga/HuangITCW13}'s results. CASH is \cite{budiu-tr02}' results. DYN is this paper's results.}
   \label{table:results_dyn}
 \end{table}
 
@@ -231,18 +231,18 @@ The result of this comparison can be seen on Table~\ref{table:results_dyn}. Once
 With FPGAs being more and more used, performance of circuit synthesis is an important problem.
 This papers show that static scheduling techniques are confronted to limits that are intrinsic to their static natures.
 The HLS approach to scheduling is often compared to the VLIW approach for general-purpose processors. Both perform greatly for regular applications.
-Using previous work on latency-insentsitive circuits, they design a new methodology to automatically generate circuits from C code.
+Using previous work on latency-insensitive circuits, they design a new methodology to automatically generate circuits from C code.
 They solve arising problems (memory accesses, control-flow starvation) and suggest ways to improve and optimize circuit generation.
 The new circuits are often able to exploit parallelism where static synthesis could not.
 The method is already implemented, although without much optimization, which show its practicality.
 The results on the benchmark seem to indicate that performance can be increased significantly. And for other programs where static scheduling is adapted, the overhead isn't significant.
-However, this methodlogy implies a consequent increase in circuit complexity, that one can hope to reduce with optimizations. 
+However, this methodology implies a consequent increase in circuit complexity, that one can hope to reduce with optimizations. 
 
 \section{Overview}
-Tis paper was published in 2018 in the International Symposium on Field-Programmable Gate Arrays (FPGA18).
+This paper was published in 2018 in the International Symposium on Field-Programmable Gate Arrays (FPGA18).
 As it is such a recent paper, it has only been cited a couple times, but the promising results might justify further work.
 It is following the work presented in~\cite{DBLP:conf/acssc/JosipovicBI17} (with 2 authors in common), which introduced the idea of using elastic circuits for dynamic HLS scheduling but only gave a big picture of the methodology.
-This work opens the field to using HLS for a broader range of applications, especially less regular ones which require more runtime flexibility to fully extract parallelism.
+This work opens the field to using HLS for a broader range of applications, especially less regular ones which require more run-time flexibility to fully extract parallelism.
 
 \section{References}
 \bibliographystyle{plain}
