@@ -1,0 +1,73 @@
+\documentclass[page number]{beamer}
+\usetheme[sectionpage=none,numbering=fraction,progressbar=foot]{metropolis}
+\usepackage{etex}
+\usepackage{graphicx, booktabs} % For tabulars
+\usepackage{pgf,tikz}
+\usepackage{ulem}
+\usetikzlibrary{arrows}
+\usetikzlibrary{positioning,shapes,fit}
+\usepackage{multicol}
+\usepackage{syntax}
+\usepackage{xcolor, color, colortbl}
+\usepackage{tikz-qtree}
+\usepackage{listings}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\makeatletter
+\makeatother
+
+%\setcounter{tocdepth}{1} % remove subsection from table of contents
+
+% colors
+\definecolor{mDarkRed}{HTML}{6F1616}
+\definecolor{mDarkGreen}{HTML}{106235}
+\definecolor{mTeal}{HTML}{112233}
+\definecolor{mBlack}{HTML}{000000}
+\setbeamercolor{normal text}{fg=mTeal}
+\setbeamercolor{alerted text}{fg=mDarkRed}
+\setbeamercolor{example text}{fg=mDarkGreen}
+\setbeamercolor{title separator}{fg=purple,bg=mBlack}
+\def\outline{
+  \begin{frame}[plain,noframenumbering]
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+
+\begin{document}
+\title{Dynamically Scheduled HLS: a Synthesis}
+
+\author[Aur\`ele Barri\`ere]{Aur\`ele Barri\`ere\hfill\textbf{Authors:}\begin{tabular}{c}
+    Lana Josipovi\'c\\
+    Radhika Ghosal\\
+    Paolo Ienne\\
+  \end{tabular}}
+
+\date{November 7, 2018}
+
+\def\outline{
+  \begin{frame}[plain,noframenumbering]
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\begin{frame}[plain,noframenumbering]
+  \vspace{-2cm}
+  \maketitle
+  \vspace{-4cm}
+\end{frame}
+
+\metroset{sectionpage=none}
+
+
+\metroset{sectionpage=progressbar}
+\begin{frame}{Test}
+  test
+\end{frame}
+    
+
+\end{document}
