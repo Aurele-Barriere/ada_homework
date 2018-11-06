@@ -64,7 +64,8 @@
 
 \metroset{sectionpage=none}
 
-
+\def\g#1{{\textbf{\color{mDarkGreen}#1}}}
+\def\r#1{{\textbf{\color{mDarkRed}#1}}}
 \metroset{sectionpage=progressbar}
 \begin{frame}{Context}
   \begin{block}{FPGAs}
@@ -252,9 +253,15 @@
   \vfill
   \begin{block}{Connecting Basic Blocks}
     Avoid deadlocks.\\
-    Coupling dataflow with control-flow.
-    TODO
+    Coupling data flow with control flow.
   \end{block}
+  \vfill
+  \vspace{-5pt}
+  \begin{center}
+    \includegraphics[scale=0.3]{wrong.png}
+    \quad\quad
+    \includegraphics[scale=0.3]{right.png}
+  \end{center}
       
 \end{frame}
 
@@ -283,12 +290,28 @@
   \begin{block}{Adding Elastic FIFOs}
     When some path takes more time, allows token accumulation without stopping the whole circuit.
   \end{block}
-  \vfill
-  TODO:Figure
 \end{frame}
 
 \begin{frame}{Implementation}
-  TODO:schema
+  \begin{tikzpicture}[%
+      every node/.style={rectangle,minimum size=4pt,minimum height=4pt, inner sep=2pt},
+      shorten >=2pt,
+      node distance=1cm, >=latex
+    ]
+    \node [draw] (0) [] {\texttt{C program}};
+    \node [draw] (1) [below=of 0] {LLVM's IR};
+    \node [draw] (2) [below=of 1] {Elastic Circuit};
+    \node [draw] (3) [below=of 2] {VHDL netlist};
+    \path [draw] (0) edge[->, left]  node {clang} (1)
+    (1) edge[->,left,color=mDarkGreen]  node {\g{Synthesizer}} (2)
+    (1) edge[->, loop right,right]  node {LLVM's optimizations} (1)
+    (2) edge[->,color=mDarkGreen]  node {} (3);
+  \end{tikzpicture}
+  \vfill
+  \begin{block}{Compared to Vivado HLS}
+    With exact same arithmetic units and RAMs.
+  \end{block}
+    
 \end{frame}
 
 \begin{frame}{Benchmark}
@@ -310,8 +333,6 @@
   \end{alertblock}
 \end{frame}
 
-\def\g#1{{\textbf{\color{mDarkGreen}#1}}}
-\def\r#1{{\textbf{\color{mDarkRed}#1}}}
 \begin{frame}{Results against Static HLS}
   \tiny
   \hspace*{-8pt}\makebox[\linewidth][c]{%
@@ -394,7 +415,20 @@
   Good methodology.\\
   Semimanual steps?
   \vfill
-  TODO
+  \begin{tikzpicture}[%
+      every node/.style={rectangle,minimum size=4pt,minimum height=4pt, inner sep=2pt},
+      shorten >=2pt,
+      node distance=1cm, >=latex
+    ]
+    \node [draw] (0) [] {\texttt{C program}};
+    \node [draw] (1) [below=of 0] {LLVM's IR};
+    \node [draw] (2) [below=of 1] {Elastic Circuit};
+    \node [draw] (3) [below=of 2] {VHDL netlist};
+    \path [draw] (0) edge[->, left]  node {clang} (1)
+    (1) edge[->,left,color=mDarkGreen]  node {\g{Synthesizer}} (2)
+    (1) edge[->, loop right,right]  node {LLVM's optimizations} (1)
+    (2) edge[->,color=mDarkGreen]  node {} (3);
+  \end{tikzpicture}
   
 \end{frame}
     
